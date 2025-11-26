@@ -1,0 +1,56 @@
+services:
+  api:
+    build: ./api
+    command: npm run dev
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+      - api/.env
+    depends_on:
+      - db
+      - cache
+    volumes:
+      - ./api:/usr/src/app
+    networks:
+      - gatenet
+
+  web:
+    build: ./web
+    command: npm run dev -- --host --port 4173
+    ports:
+      - "5173:4173"
+    env_file:
+      - .env
+      - web/.env
+    depends_on:
+      - api
+    volumes:
+      - ./web:/usr/src/app
+    networks:
+      - gatenet
+
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: gatenet
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: gatenet
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - gatenet
+
+  cache:
+    image: redis:7
+    restart: unless-stopped
+    networks:
+      - gatenet
+
+networks:
+  gatenet:
+    driver: bridge
+
+volumes:
+  db_data:
